@@ -2,7 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <title>Floating Earth Portal AR</title>
+    <title>Space Gate AR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- A-Frame -->
@@ -12,77 +12,215 @@
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
     <style>
+      html,
       body {
         margin: 0;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
-        font-family: sans-serif;
+        background: #000;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      /*
+        マーカー認識後に画面全体へ重ねる宇宙レイヤー。
+        カメラ映像の上に半透明で重ねることで、
+        「スマホ画面が宇宙空間に切り替わった」ように見せる。
+      */
+      .space-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 1.4s ease;
+        background:
+          radial-gradient(circle at 25% 20%, rgba(88, 166, 255, 0.32), transparent 28%),
+          radial-gradient(circle at 75% 30%, rgba(188, 87, 255, 0.25), transparent 30%),
+          radial-gradient(circle at 50% 80%, rgba(36, 120, 255, 0.25), transparent 35%),
+          linear-gradient(
+            180deg,
+            rgba(1, 6, 24, 0.58),
+            rgba(2, 0, 18, 0.72)
+          );
+        mix-blend-mode: screen;
+      }
+
+      body.space-mode .space-layer {
+        opacity: 1;
+      }
+
+      .star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        border-radius: 999px;
+        background: white;
+        opacity: 0.85;
+        animation-name: twinkle;
+        animation-iteration-count: infinite;
+        animation-timing-function: ease-in-out;
+      }
+
+      @keyframes twinkle {
+        0% {
+          opacity: 0.2;
+          transform: scale(0.8);
+        }
+
+        50% {
+          opacity: 1;
+          transform: scale(1.6);
+        }
+
+        100% {
+          opacity: 0.25;
+          transform: scale(0.85);
+        }
+      }
+
+      .space-vignette {
+        position: fixed;
+        inset: 0;
+        z-index: 21;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 1.4s ease;
+        background:
+          radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.42) 100%);
+      }
+
+      body.space-mode .space-vignette {
+        opacity: 1;
+      }
+
+      /*
+        マーカーを認識した瞬間のゲート演出。
+        一瞬だけ白青く光る。
+      */
+      .gate-flash {
+        position: fixed;
+        inset: 0;
+        z-index: 22;
+        pointer-events: none;
+        opacity: 0;
+        background: radial-gradient(
+          circle at center,
+          rgba(255, 255, 255, 0.55),
+          rgba(78, 171, 255, 0.22) 28%,
+          transparent 58%
+        );
+      }
+
+      body.flash .gate-flash {
+        animation: gateFlash 1.2s ease-out forwards;
+      }
+
+      @keyframes gateFlash {
+        0% {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+
+        25% {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        100% {
+          opacity: 0;
+          transform: scale(1.25);
+        }
       }
 
       .hint {
         position: fixed;
         left: 12px;
         bottom: 12px;
-        z-index: 10;
+        z-index: 30;
         padding: 8px 10px;
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.55);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.58);
         color: white;
-        font-size: 13px;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        pointer-events: none;
+        transition: opacity 0.8s ease;
+      }
+
+      body.space-mode .hint {
+        opacity: 0;
       }
     </style>
   </head>
 
   <body>
-    <div class="hint">Hiroマーカーをカメラに映してください</div>
+    <!-- 画面全体に重ねる宇宙演出 -->
+    <div class="space-layer" id="space-layer"></div>
+    <div class="space-vignette"></div>
+    <div class="gate-flash"></div>
+
+    <div class="hint">Hiroマーカーを映すと宇宙モードになります</div>
 
     <a-scene
       embedded
       vr-mode-ui="enabled: false"
-      renderer="logarithmicDepthBuffer: true; antialias: true"
+      renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true"
       arjs="sourceType: webcam; debugUIEnabled: false;"
     >
       <a-marker
+        id="hiro-marker"
         preset="hiro"
         smooth="true"
         smooth-count="5"
         smooth-tolerance="0.01"
         smooth-threshold="2"
       >
-        <!-- マーカー上のポータルリング -->
+        <!-- マーカーを宇宙への入口に見立てたポータルリング -->
         <a-torus
           position="0 0.04 0"
           rotation="-90 0 0"
-          radius="0.62"
-          radius-tubular="0.018"
+          radius="0.68"
+          radius-tubular="0.022"
           color="#7dd3fc"
-          material="opacity: 0.75; transparent: true"
-          animation="property: rotation; to: -90 360 0; loop: true; dur: 7000; easing: linear"
+          material="opacity: 0.82; transparent: true; emissive: #2563eb; emissiveIntensity: 0.6"
+          animation="property: rotation; to: -90 360 0; loop: true; dur: 6200; easing: linear"
         ></a-torus>
 
         <a-torus
-          position="0 0.06 0"
+          position="0 0.07 0"
           rotation="-90 0 0"
-          radius="0.82"
-          radius-tubular="0.008"
+          radius="0.9"
+          radius-tubular="0.01"
           color="#ffffff"
-          material="opacity: 0.45; transparent: true"
-          animation="property: rotation; to: -90 -360 0; loop: true; dur: 11000; easing: linear"
+          material="opacity: 0.55; transparent: true; emissive: #ffffff; emissiveIntensity: 0.35"
+          animation="property: rotation; to: -90 -360 0; loop: true; dur: 9800; easing: linear"
+        ></a-torus>
+
+        <a-torus
+          position="0 0.1 0"
+          rotation="-90 0 0"
+          radius="0.38"
+          radius-tubular="0.008"
+          color="#a855f7"
+          material="opacity: 0.65; transparent: true; emissive: #7e22ce; emissiveIntensity: 0.5"
+          animation="property: rotation; to: -90 360 0; loop: true; dur: 4200; easing: linear"
         ></a-torus>
 
         <!-- 地球の影 -->
         <a-circle
-          position="0 0.03 0"
+          position="0 0.025 0"
           rotation="-90 0 0"
-          radius="0.42"
+          radius="0.48"
           color="#000000"
-          material="opacity: 0.22; transparent: true"
+          material="opacity: 0.26; transparent: true"
         ></a-circle>
 
         <!-- 地球全体。少し上下に浮く -->
         <a-entity
           id="earth-wrapper"
-          position="0 0.78 0"
-          animation="property: position; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine; to: 0 0.92 0"
+          position="0 0.82 0"
+          animation="property: position; dir: alternate; dur: 1700; loop: true; easing: easeInOutSine; to: 0 0.98 0"
         >
           <!-- 地球本体。ここ全体を回転させる -->
           <a-entity
@@ -93,7 +231,7 @@
             <a-sphere
               radius="0.43"
               color="#1e90ff"
-              material="roughness: 0.35; metalness: 0.05"
+              material="roughness: 0.35; metalness: 0.05; emissive: #0f4c81; emissiveIntensity: 0.12"
             ></a-sphere>
 
             <!-- 陸地っぽい緑のパーツ：前面 -->
@@ -139,7 +277,7 @@
               radius="0.56"
               radius-tubular="0.01"
               rotation="75 0 20"
-              material="opacity: 0.7; transparent: true"
+              material="opacity: 0.76; transparent: true; emissive: #9be8ff; emissiveIntensity: 0.25"
             ></a-torus>
           </a-entity>
         </a-entity>
@@ -147,50 +285,125 @@
         <!-- 月の軌道。親要素を回転させて月を周回させる -->
         <a-entity
           id="moon-orbit"
-          position="0 0.85 0"
-          animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear"
+          position="0 0.9 0"
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 4800; easing: linear"
         >
           <a-sphere
             radius="0.09"
             color="#d9d9d9"
-            position="0.82 0.08 0"
-            material="roughness: 0.8"
+            position="0.85 0.08 0"
+            material="roughness: 0.8; emissive: #ffffff; emissiveIntensity: 0.08"
           ></a-sphere>
+
+          <!-- 月の軌道線 -->
+          <a-torus
+            position="0 0.08 0"
+            rotation="90 0 0"
+            radius="0.85"
+            radius-tubular="0.004"
+            color="#ffffff"
+            material="opacity: 0.28; transparent: true"
+          ></a-torus>
         </a-entity>
 
-        <!-- 周囲の星 -->
+        <!-- マーカー周辺に浮く星 -->
         <a-sphere
           radius="0.035"
           color="#fff7ad"
-          position="-0.75 1.15 -0.35"
+          position="-0.82 1.16 -0.35"
+          material="emissive: #fff7ad; emissiveIntensity: 0.7"
         ></a-sphere>
 
         <a-sphere
           radius="0.025"
           color="#ffffff"
-          position="0.68 1.32 0.28"
+          position="0.68 1.34 0.28"
+          material="emissive: #ffffff; emissiveIntensity: 0.6"
         ></a-sphere>
 
         <a-sphere
           radius="0.03"
           color="#fff7ad"
           position="0.45 0.55 -0.72"
+          material="emissive: #fff7ad; emissiveIntensity: 0.5"
         ></a-sphere>
 
         <a-sphere
           radius="0.022"
           color="#ffffff"
           position="-0.48 0.65 0.68"
+          material="emissive: #ffffff; emissiveIntensity: 0.6"
         ></a-sphere>
 
         <a-sphere
           radius="0.028"
           color="#fff7ad"
-          position="0.12 1.42 -0.58"
+          position="0.12 1.45 -0.58"
+          material="emissive: #fff7ad; emissiveIntensity: 0.5"
         ></a-sphere>
       </a-marker>
 
       <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const marker = document.querySelector("#hiro-marker");
+        const spaceLayer = document.querySelector("#space-layer");
+
+        let hasOpenedGate = false;
+
+        // 画面全体に星をランダム生成する
+        const createStars = () => {
+          const starCount = 120;
+
+          for (let i = 0; i < starCount; i++) {
+            const star = document.createElement("div");
+            star.className = "star";
+
+            const size = Math.random() * 2.4 + 0.8;
+            const left = Math.random() * 100;
+            const top = Math.random() * 100;
+            const duration = Math.random() * 2.8 + 1.8;
+            const delay = Math.random() * 3;
+
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.left = `${left}%`;
+            star.style.top = `${top}%`;
+            star.style.animationDuration = `${duration}s`;
+            star.style.animationDelay = `${delay}s`;
+
+            if (Math.random() > 0.78) {
+              star.style.boxShadow = "0 0 8px rgba(255, 255, 255, 0.85)";
+            }
+
+            spaceLayer.appendChild(star);
+          }
+        };
+
+        createStars();
+
+        // Hiroマーカーを認識したら宇宙モードに入る
+        marker.addEventListener("markerFound", () => {
+          if (!hasOpenedGate) {
+            hasOpenedGate = true;
+
+            document.body.classList.add("space-mode");
+            document.body.classList.add("flash");
+
+            setTimeout(() => {
+              document.body.classList.remove("flash");
+            }, 1300);
+          }
+        });
+
+        /*
+          markerLost では space-mode を消さない。
+          これにより、Hiroマーカーを一度見たあとにスマホを別方向へ向けても、
+          画面上では宇宙空間に入ったような演出が続く。
+        */
+      });
+    </script>
   </body>
 </html>
