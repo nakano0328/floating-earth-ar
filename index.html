@@ -6,10 +6,7 @@
   <title>Space Gate AR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-
-  <!-- AR.js for A-Frame -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
   <style>
@@ -19,14 +16,16 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #000;
+      background: transparent;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /*
-        画面全体の星レイヤー。
-        背景色やグラデーションは使わず、星だけを重ねる。
-      */
+    a-scene,
+    canvas,
+    video {
+      background: transparent !important;
+    }
+
     .star-layer {
       position: fixed;
       inset: 0;
@@ -34,6 +33,7 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 1.1s ease;
+      background: transparent;
     }
 
     body.space-mode .star-layer {
@@ -67,9 +67,6 @@
       }
     }
 
-    /*
-        流れ星。背景ではなく、星だけの演出として追加。
-      */
     .shooting-star {
       position: fixed;
       left: -25%;
@@ -134,7 +131,6 @@
 </head>
 
 <body>
-  <!-- マーカー認識後に出る、画面全体の星だけの演出 -->
   <div class="star-layer" id="star-layer"></div>
   <div class="shooting-star"></div>
 
@@ -144,7 +140,6 @@
     arjs="sourceType: webcam; debugUIEnabled: false;">
     <a-marker id="hiro-marker" preset="hiro" smooth="true" smooth-count="5" smooth-tolerance="0.01"
       smooth-threshold="2">
-      <!-- マーカーを宇宙への入口に見立てたポータルリング -->
       <a-torus position="0 0.04 0" rotation="-90 0 0" radius="0.68" radius-tubular="0.022" color="#7dd3fc"
         material="opacity: 0.82; transparent: true; emissive: #2563eb; emissiveIntensity: 0.6"
         animation="property: rotation; to: -90 360 0; loop: true; dur: 6200; easing: linear"></a-torus>
@@ -157,76 +152,59 @@
         material="opacity: 0.62; transparent: true; emissive: #7e22ce; emissiveIntensity: 0.45"
         animation="property: rotation; to: -90 360 0; loop: true; dur: 4200; easing: linear"></a-torus>
 
-      <!-- 地球の影 -->
       <a-circle position="0 0.025 0" rotation="-90 0 0" radius="0.48" color="#000000"
         material="opacity: 0.24; transparent: true"></a-circle>
 
-      <!-- 地球全体。少し上下に浮く -->
       <a-entity id="earth-wrapper" position="0 0.82 0"
         animation="property: position; dir: alternate; dur: 1700; loop: true; easing: easeInOutSine; to: 0 0.98 0">
-        <!-- 地球本体。ここ全体を回転させる -->
         <a-entity id="earth" animation="property: rotation; to: 0 360 0; loop: true; dur: 8500; easing: linear">
-          <!-- 海 -->
           <a-sphere radius="0.46" color="#2fa7ff"
             material="roughness: 0.3; metalness: 0.05; emissive: #1e90ff; emissiveIntensity: 0.2"></a-sphere>
 
-          <!-- 陸地っぽい緑のパーツ：前面 -->
           <a-sphere radius="0.12" color="#2ecc71" position="-0.18 0.13 0.43" scale="1.65 0.45 0.75"></a-sphere>
 
           <a-sphere radius="0.095" color="#27ae60" position="0.18 -0.04 0.44" scale="1.35 0.45 0.72"></a-sphere>
 
           <a-sphere radius="0.075" color="#2ecc71" position="-0.05 -0.22 0.44" scale="1.4 0.4 0.65"></a-sphere>
 
-          <!-- 陸地っぽい緑のパーツ：裏側 -->
           <a-sphere radius="0.105" color="#2ecc71" position="0.10 0.22 -0.42" scale="1.45 0.45 0.75"></a-sphere>
 
           <a-sphere radius="0.085" color="#27ae60" position="-0.25 -0.15 -0.37" scale="1.6 0.42 0.7"></a-sphere>
 
-          <!-- 地球の周りの薄いリング -->
           <a-torus color="#dff6ff" radius="0.59" radius-tubular="0.01" rotation="75 0 20"
             material="opacity: 0.72; transparent: true; emissive: #9be8ff; emissiveIntensity: 0.22"></a-torus>
         </a-entity>
       </a-entity>
 
-      <!-- 月の軌道。親要素を回転させて月を周回させる -->
       <a-entity id="moon-orbit" position="0 0.9 0"
         animation="property: rotation; to: 0 360 0; loop: true; dur: 4800; easing: linear">
         <a-sphere radius="0.09" color="#d9d9d9" position="0.85 0.08 0"
           material="roughness: 0.8; emissive: #ffffff; emissiveIntensity: 0.08"></a-sphere>
 
-        <!-- 月の軌道線 -->
         <a-torus position="0 0.08 0" rotation="90 0 0" radius="0.85" radius-tubular="0.004" color="#ffffff"
           material="opacity: 0.24; transparent: true"></a-torus>
       </a-entity>
 
-      <!-- 人工衛星。月とは逆方向に周回する -->
       <a-entity id="satellite-orbit" position="0 0.92 0"
         animation="property: rotation; to: 0 -360 0; loop: true; dur: 6500; easing: linear">
-        <a-entity position="-1.08 0.16 0" rotation="0 0 0">
-          <!-- 衛星本体 -->
+        <a-entity position="-1.08 0.16 0">
           <a-box width="0.13" height="0.09" depth="0.09" color="#d1d5db"
             material="metalness: 0.35; roughness: 0.35; emissive: #ffffff; emissiveIntensity: 0.06"></a-box>
 
-          <!-- 太陽光パネル -->
-          <a-box width="0.28" height="0.045" depth="0.012" position="-0.22 0 0" color="#2563eb"
-            material="metalness: 0.2; roughness: 0.45"></a-box>
+          <a-box width="0.28" height="0.045" depth="0.012" position="-0.22 0 0" color="#2563eb"></a-box>
 
-          <a-box width="0.28" height="0.045" depth="0.012" position="0.22 0 0" color="#2563eb"
-            material="metalness: 0.2; roughness: 0.45"></a-box>
+          <a-box width="0.28" height="0.045" depth="0.012" position="0.22 0 0" color="#2563eb"></a-box>
 
-          <!-- 小さいアンテナ -->
-          <a-cylinder radius="0.01" height="0.16" position="0 0.12 0" rotation="0 0 0" color="#f8fafc"></a-cylinder>
+          <a-cylinder radius="0.01" height="0.16" position="0 0.12 0" color="#f8fafc"></a-cylinder>
 
           <a-sphere radius="0.025" position="0 0.21 0" color="#f8fafc"
             material="emissive: #ffffff; emissiveIntensity: 0.18"></a-sphere>
         </a-entity>
 
-        <!-- 衛星の軌道線 -->
         <a-torus position="0 0.16 0" rotation="90 0 0" radius="1.08" radius-tubular="0.003" color="#ffffff"
           material="opacity: 0.2; transparent: true"></a-torus>
       </a-entity>
 
-      <!-- マーカー周辺に浮く小さな星 -->
       <a-sphere radius="0.035" color="#fff7ad" position="-0.82 1.16 -0.35"
         material="emissive: #fff7ad; emissiveIntensity: 0.7"></a-sphere>
 
@@ -253,7 +231,6 @@
 
       let hasOpenedGate = false;
 
-      // 画面全体に星をランダム生成する
       const createStars = () => {
         const starCount = 70;
 
@@ -284,19 +261,12 @@
 
       createStars();
 
-      // Hiroマーカーを認識したら星レイヤーを表示する
       marker.addEventListener("markerFound", () => {
         if (!hasOpenedGate) {
           hasOpenedGate = true;
           document.body.classList.add("space-mode");
         }
       });
-
-      /*
-        markerLost では space-mode を消さない。
-        これにより、Hiroマーカーを一度見たあとにスマホを別方向へ向けても、
-        画面上では星の演出が残る。
-      */
     });
   </script>
 </body>
